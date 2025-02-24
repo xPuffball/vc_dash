@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, ArrowRight } from 'lucide-react';
+import { MessageSquare, ArrowRight, X } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
 import {
@@ -22,6 +22,7 @@ const VisualizationCard = ({
   type,
   title,
   onQuestionClick,
+  onDelete,
   relatedInsights,
   className = '',
   chartHeight = 300
@@ -94,37 +95,32 @@ const VisualizationCard = ({
   };
 
   return (
-    <Card
-      /* 
-         Let the entire card be horizontally resizable, 
-         no scroll bars, and a minimum width. 
-      */
-      className={`relative bg-white shadow-lg ${className}`}
-      style={{
-        resize: 'horizontal',
-        overflow: 'hidden',
-        minWidth: '400px', // Adjust as needed
-      }}
-    >
+    <Card className={`relative bg-white shadow-lg ${className}`}>
       <CardContent className="p-4 flex flex-col">
-        {/* Header (toggle chat with MessageSquare) */}
+        {/* Header with title, delete, and chat icons */}
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-semibold">{title}</h3>
-          <MessageSquare
-            className="text-gray-400 cursor-pointer hover:text-blue-600"
-            size={20}
-            onClick={() => setShowChat(!showChat)}
-          />
+          <div className="flex items-center gap-2">
+            <MessageSquare
+              className="text-gray-400 cursor-pointer hover:text-blue-600"
+              size={20}
+              onClick={() => setShowChat(!showChat)}
+            />
+            <button
+              onClick={onDelete}
+              className="text-gray-400 hover:text-red-600 rounded-full hover:bg-red-50 flex items-center justify-center w-6 h-6"
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
-        {/* Chart area with fixed minHeight so Recharts knows how to size */}
+        {/* Chart area */}
         <div style={{ width: '100%', height: chartHeight }}>
-          <ResponsiveContainer width="100%" height="100%">
-            {renderChart()}
-          </ResponsiveContainer>
+          {renderChart()}
         </div>
 
-        {/* Follow-up chat toggled by showChat; grows card vertically */}
+        {/* Follow-up chat section */}
         {showChat && (
           <div className="mt-4 border-t pt-4">
             <div className="space-y-4">
@@ -141,7 +137,6 @@ const VisualizationCard = ({
                 </Alert>
               ))}
 
-              {/* Follow-up question input */}
               <form onSubmit={handleFollowUpSubmit} className="flex items-center space-x-2">
                 <input
                   type="text"

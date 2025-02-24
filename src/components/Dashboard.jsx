@@ -364,13 +364,15 @@ const Dashboard = () => {
                         {item.content}
                     </div>
                     ) : (
-                    <VisualizationCard
+                      <VisualizationCard
                         {...item}
                         relatedInsights={item.relatedInsights || []}
                         onQuestionClick={(question) =>
-                        setDeepResearch({ open: true, question })
+                          setDeepResearch({ open: true, question })
                         }
-                        // Ensure your chart uses 100% width to fill the container
+                        onDelete={() => {
+                          setDashboardItems(items => items.filter(i => i.id !== item.id));
+                        }}
                         chartHeight={300} 
                     />
                     )}
