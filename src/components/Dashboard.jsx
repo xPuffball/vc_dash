@@ -11,6 +11,7 @@ import Sidebar from './Sidebar';
 import DeepResearch from './DeepResearch';
 import VisualizationCard from './VisualizationCard';
 import { mockTrendData, mockSectorData } from '../data/mockData';
+import {totalInvestmentByYear, totalInvestmentBySector, investmentVolumeByYear, investmentAvgByYear, investmentPercentageByCategory, investmentAmountDollarByCategory} from '../data/questionOneData';
 
 const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
