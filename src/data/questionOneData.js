@@ -201,7 +201,7 @@ export const totalInvestmentByYear = [
     }
   ]
   
-  const investmentAmountDollarByCategory = [
+export const investmentAmountDollarByCategory = [
     {
         "year": 2019,
         "<$100K": 1792785,
