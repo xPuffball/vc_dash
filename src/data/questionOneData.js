@@ -252,4 +252,59 @@ export const investmentAmountDollarByCategory = [
     }
   ]
 
+  export const regionData = 
+  {
+    "data": [
+      {
+        "Region": "Alberta",
+        "Software & Cloud": 12069670.0,
+        "Finance & Payments": 31599790.0,
+        "Robotics & Advanced Tech": 12508130.0,
+        "AI & Big Data": 4769894.0,
+        "Health & Biotech": 3274709.0
+      },
+      {
+        "Region": "British Columbia",
+        "Software & Cloud": 29319550.0,
+        "Finance & Payments": 46082940.0,
+        "Robotics & Advanced Tech": 13984610.0,
+        "AI & Big Data": 11632960.0,
+        "Health & Biotech": 20905960.0
+      },
+      {
+        "Region": "Ottawa",
+        "Software & Cloud": 20628000.0,
+        "Finance & Payments": 23873490.0,
+        "Robotics & Advanced Tech": 13085710.0,
+        "AI & Big Data": 20919360.0,
+        "Health & Biotech": 2380842.0
+      },
+      {
+        "Region": "Quebec",
+        "Software & Cloud": 10854740.0,
+        "Finance & Payments": 14729420.0,
+        "Robotics & Advanced Tech": 16598490.0,
+        "AI & Big Data": 10291920.0,
+        "Health & Biotech": 16655270.0
+      },
+      {
+        "Region": "Toronto",
+        "Software & Cloud": 18054230.0,
+        "Finance & Payments": 22665870.0,
+        "Robotics & Advanced Tech": 9527082.0,
+        "AI & Big Data": 31237190.0,
+        "Health & Biotech": 11288200.0
+      },
+      {
+        "Region": "Waterloo",
+        "Software & Cloud": 17356940.0,
+        "Finance & Payments": 3769709.0,
+        "Robotics & Advanced Tech": 59804180.0,
+        "AI & Big Data": 20045230.0,
+        "Health & Biotech": 5053557.0
+      }
+    ]
+  }
+  
+
   export const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];

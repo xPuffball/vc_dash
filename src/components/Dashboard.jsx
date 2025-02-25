@@ -1,3 +1,5 @@
+// Modified Dashboard.jsx Component to include Regional Analysis page
+
 import React, { useState, useEffect } from 'react';
 import {
   Search,
@@ -8,7 +10,9 @@ import {
   BarChart2,
   X,
   ArrowRight,
-  MessageSquare
+  MessageSquare,
+  FileText,
+  Globe // Added for Regional icon
 } from 'lucide-react';
 import Sidebar from './Sidebar';
 import DeepResearch from './DeepResearch';
@@ -21,20 +25,22 @@ import {
   ComposedChart
 } from 'recharts';
 
+// Import our data sources
 import {
   totalInvestmentByYear, 
   totalInvestmentBySector, 
   investmentVolumeByYear, 
   investmentAvgByYear,
   investmentPercentageByCategory,
-  investmentAmountDollarByCategory
+  investmentAmountDollarByCategory,
+  COLORS
 } from '../data/questionOneData';
 
-// COLORS for consistency across all visualizations
-const COLORS = [
-  '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', 
-  '#82ca9d', '#ffc658', '#ff7300', '#a4de6c'
-];
+// Import regional visualization components and functions
+import { 
+  createRegionalDashboardItems, 
+  regionalVisualizations 
+} from './RegionalAnalysis';
 
 // Transform data for visualizations
 const transformData = () => {
@@ -96,8 +102,8 @@ const transformData = () => {
   };
 };
 
-// Create visualization items
-const createDashboardItems = () => {
+// Function to create dashboard items for the Investment Trends dashboard
+const createInvestmentDashboardItems = () => {
   const {
     investmentTrendData,
     topSectorData,
@@ -204,6 +210,12 @@ const VisualizationCard = ({ data, type, title, onQuestionClick, onDelete, relat
   const chartMargin = { top: 20, right: 20, bottom: 35, left: 20 };
 
   const renderChart = () => {
+    // Handle regional visualization types
+    if (Object.keys(regionalVisualizations).includes(type)) {
+      const RegionalComponent = regionalVisualizations[type];
+      return <RegionalComponent data={data} title={title} />;
+    }
+
     switch (type) {
       case 'investmentTrend':
         return (
@@ -433,11 +445,14 @@ const Dashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [query, setQuery] = useState('');
   const [deepResearch, setDeepResearch] = useState({ open: false, question: '' });
+  
+  // Initialize folders with sample data including the new Regional Analysis dashboard
   const [folders, setFolders] = useState([
     {
       id: 1,
       name: 'Investment Analysis',
       icon: <TrendingUp size={18} />,
+      iconType: 'investment',
       dashboards: [
         { id: 1, name: 'Investment Trends 2024', starred: true },
         { id: 2, name: 'Series A Analysis', starred: false }
@@ -448,21 +463,54 @@ const Dashboard = () => {
       id: 2,
       name: 'Sector Deep Dives',
       icon: <BarChart2 size={18} />,
+      iconType: 'chart',
       dashboards: [
         { id: 3, name: 'AI/ML Sector Overview', starred: true },
         { id: 4, name: 'FinTech Momentum', starred: false }
       ],
       expanded: false
+    },
+    {
+      id: 3, // New folder for Regional Analysis
+      name: 'Regional Analysis',
+      icon: <Globe size={18} />,
+      iconType: 'global',
+      dashboards: [
+        { id: 5, name: 'Regional Investment Breakdown', starred: true },
+      ],
+      expanded: false
     }
   ]);
 
-  // Initialize dashboard items with our real data
-  const [dashboardItems, setDashboardItems] = useState([...createDashboardItems()]);
+  // State for the active dashboard
+  const [activeDashboard, setActiveDashboard] = useState({
+    folderId: 1,
+    dashboardId: 1,
+    name: 'Investment Trends 2024'
+  });
+
+  // Function to get dashboard items based on the active dashboard
+  const getDashboardItems = (dashboardId) => {
+    switch (dashboardId) {
+      case 1: // Investment Trends 2024
+        return createInvestmentDashboardItems();
+      case 5: // Regional Investment Breakdown
+        return createRegionalDashboardItems();
+      default:
+        return [];
+    }
+  };
+
+  // Initialize dashboard items based on the active dashboard
+  const [dashboardItems, setDashboardItems] = useState(getDashboardItems(activeDashboard.dashboardId));
 
   // Text box counter for creating unique IDs
   const [textBoxCounter, setTextBoxCounter] = useState(1);
 
-  const [currentDashboard, setCurrentDashboard] = useState(null);
+  // Load the appropriate dashboard when the active dashboard changes
+  useEffect(() => {
+    setDashboardItems(getDashboardItems(activeDashboard.dashboardId));
+  }, [activeDashboard.dashboardId]);
 
   // Add a new text box to the dashboard
   const addTextBox = () => {
@@ -639,34 +687,53 @@ const Dashboard = () => {
     ]);
   };
 
-  // Add this function to your Dashboard component
-const handleDashboardSelect = ({ folderId, dashboardId }) => {
-  // Find the selected dashboard
-  const folder = folders.find(f => f.id === folderId);
-  if (!folder) return;
-  
-  const dashboard = folder.dashboards.find(d => d.id === dashboardId);
-  if (!dashboard) return;
+  // Handle dashboard selection from sidebar
+  const handleDashboardSelect = ({ folderId, dashboardId }) => {
+    // Find the selected dashboard
+    const folder = folders.find(f => f.id === folderId);
+    if (!folder) return;
+    
+    const dashboard = folder.dashboards.find(d => d.id === dashboardId);
+    if (!dashboard) return;
 
-  console.log(`Selected dashboard: ${dashboard.name}`);
+    // Update the active dashboard
+    setActiveDashboard({
+      folderId,
+      dashboardId,
+      name: dashboard.name
+    });
+    
+    console.log(`Switched to dashboard: ${dashboard.name}`);
+  };
 
-}
+  // Save the current dashboard
+  const saveDashboard = () => {
+    console.log(`Saving dashboard: ${activeDashboard.name}`);
+    
+    // In a real app, you would save the dashboard state to a database here
+    // For this demo, we'll just show a success message
+    const feedback = document.createElement('div');
+    feedback.className = 'fixed z-50 bg-green-500 text-white px-3 py-1 rounded-md text-sm';
+    feedback.style.left = '50%';
+    feedback.style.top = '20px';
+    feedback.style.transform = 'translateX(-50%)';
+    feedback.textContent = `Dashboard "${activeDashboard.name}" saved successfully!`;
+    document.body.appendChild(feedback);
+    
+    setTimeout(() => {
+      document.body.removeChild(feedback);
+    }, 2000);
+  };
 
-const saveDashboard = () => {
-  if (!currentDashboard) return;
-  
-  console.log(`Saving dashboard: ${currentDashboard.name}`);
-
-};
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      {/* With this enhanced version: */}
       <Sidebar 
         open={sidebarOpen} 
         folders={folders} 
         setFolders={setFolders}
-        onDashboardSelect={handleDashboardSelect} 
+        onDashboardSelect={handleDashboardSelect}
+        activeDashboard={activeDashboard}
       />
 
       {/* Main Content */}
@@ -691,17 +758,15 @@ const saveDashboard = () => {
                 className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
-            {currentDashboard && (
-              <div className="flex items-center ml-4">
-                <h1 className="text-lg font-semibold">{currentDashboard.name}</h1>
-                <button
-                  onClick={saveDashboard}
-                  className="ml-4 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Save
-                </button>
-              </div>
-            )}
+            <div className="flex items-center ml-4">
+              <h1 className="text-lg font-semibold">{activeDashboard.name}</h1>
+              <button
+                onClick={saveDashboard}
+                className="ml-4 px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
 
@@ -713,6 +778,37 @@ const saveDashboard = () => {
             backgroundImage: 'radial-gradient(circle, #e5e7eb 1px, transparent 1px)'
           }}
         >
+          {/* Dashboard Welcome Message when no items exist */}
+          {dashboardItems.length === 0 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <div className="text-center max-w-md p-6 bg-white rounded-lg shadow-lg">
+                <h2 className="text-2xl font-bold text-gray-800 mb-4">Welcome to Your Dashboard</h2>
+                <p className="text-gray-600 mb-6">
+                  This dashboard is currently empty. You can add visualizations using the buttons below, 
+                  or create text notes to organize your research.
+                </p>
+                <div className="flex space-x-4 justify-center">
+                  <button
+                    onClick={addTextBox}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
+                  >
+                    <FileText size={18} className="mr-2" />
+                    Add Note
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeepResearch({ open: true, question: 'Create a new visualization' });
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                  >
+                    <Plus size={18} className="mr-2" />
+                    Add Visualization
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* SVG Overlay for Connections */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none">
             {/* Permanent Connections */}
@@ -720,14 +816,15 @@ const saveDashboard = () => {
               item.connections?.map((connection, idx) => {
                 const sourceEl = document.getElementById(`item-${item.id}`);
                 const targetEl = document.getElementById(`item-${connection.targetId}`);
+                const containerEl = document.getElementById('dashboard-container');
                 
-                if (sourceEl && targetEl) {
+                if (sourceEl && targetEl && containerEl) {
                   // Get the bounding rectangles for source and target
                   const sourceRect = sourceEl.getBoundingClientRect();
                   const targetRect = targetEl.getBoundingClientRect();
                   
                   // Get the container's position
-                  const containerRect = document.getElementById('dashboard-container').getBoundingClientRect();
+                  const containerRect = containerEl.getBoundingClientRect();
                   
                   // Calculate connection points (from the bottom right of source to the bottom right of target)
                   const sourceConnector = {
@@ -780,7 +877,7 @@ const saveDashboard = () => {
             )}
 
             {/* Temporary Linking Line */}
-            {linking.active && linking.fromPos && linking.currentPos && (
+            {linking.active && linking.fromPos && linking.currentPos && document.getElementById('dashboard-container') && (
               <>
                 <line
                   x1={linking.fromPos.x - document.getElementById('dashboard-container').getBoundingClientRect().left}
@@ -882,8 +979,8 @@ const saveDashboard = () => {
             ))}
           </div>
 
-          {/* Toolbar - Add Text Box Button */}
-          <div className="fixed bottom-6 right-20 flex space-x-3">
+          {/* Main Action Buttons - Simplified */}
+          <div className="fixed bottom-6 right-6 flex space-x-3">
             <button
               className="bg-green-600 text-white p-4 rounded-full shadow-lg hover:bg-green-700 flex items-center justify-center"
               onClick={addTextBox}

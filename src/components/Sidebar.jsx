@@ -12,10 +12,17 @@ import {
   Trash2,
   Check,
   X,
-  FileText
+  FileText,
+  Search
 } from 'lucide-react';
 
-const Sidebar = ({ open, folders = [], setFolders = () => {}, onDashboardSelect = () => {} }) => {
+const Sidebar = ({ 
+  open, 
+  folders = [], 
+  setFolders = () => {}, 
+  onDashboardSelect = () => {}, 
+  activeDashboard = null 
+}) => {
   const [editingItem, setEditingItem] = useState(null); // { type: 'folder'|'dashboard', id: number }
   const [newName, setNewName] = useState('');
   const [hoveredItem, setHoveredItem] = useState(null); // { type: 'folder'|'dashboard', id: number }
@@ -153,6 +160,19 @@ const Sidebar = ({ open, folders = [], setFolders = () => {}, onDashboardSelect 
     }));
   };
 
+  // Automatically expand the folder containing the active dashboard
+  React.useEffect(() => {
+    if (activeDashboard && activeDashboard.folderId) {
+      setFolders(prevFolders => 
+        prevFolders.map(folder => 
+          folder.id === activeDashboard.folderId
+            ? { ...folder, expanded: true }
+            : folder
+        )
+      );
+    }
+  }, [activeDashboard, setFolders]);
+
   return (
     <div className={`bg-white shadow-lg transition-all duration-300 flex flex-col ${open ? 'w-64' : 'w-20'}`}>
       {/* Header */}
@@ -174,6 +194,20 @@ const Sidebar = ({ open, folders = [], setFolders = () => {}, onDashboardSelect 
         </div>
       </div>
 
+      {/* Search Bar (Only visible when sidebar is open) */}
+      {open && (
+        <div className="px-4 py-3">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
+            <input
+              type="text"
+              placeholder="Search dashboards..."
+              className="w-full py-1.5 pl-8 pr-3 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Folders List */}
       <div className="flex-1 overflow-auto">
         <div className="p-4">
@@ -185,7 +219,7 @@ const Sidebar = ({ open, folders = [], setFolders = () => {}, onDashboardSelect 
               onMouseLeave={() => setHoveredItem(null)}
             >
               {/* Folder Header */}
-              <div className="flex items-center space-x-3 p-2 rounded cursor-pointer hover:bg-gray-50">
+              <div className={`flex items-center space-x-3 p-2 rounded cursor-pointer hover:bg-gray-50 ${activeDashboard && activeDashboard.folderId === folder.id ? 'bg-blue-50' : ''}`}>
                 {/* Folder Icon */}
                 <div onClick={() => toggleFolder(folder.id)}>
                   {folder.icon || folderIcons.default}
@@ -218,38 +252,43 @@ const Sidebar = ({ open, folders = [], setFolders = () => {}, onDashboardSelect 
                       </div>
                     ) : (
                       <>
+                        {/* Fixed: Added truncate class to prevent text overflow */}
                         <span 
-                          className="flex-1"
+                          className="flex-1 truncate"
                           onClick={() => toggleFolder(folder.id)}
+                          title={folder.name}
                         >
                           {folder.name}
                         </span>
                         
-                        {/* Folder Actions (visible on hover) */}
-                        {hoveredItem && hoveredItem.type === 'folder' && hoveredItem.id === folder.id && (
-                          <div className="flex space-x-1">
-                            <button 
-                              onClick={() => startEditing('folder', folder.id, folder.name)}
-                              className="text-gray-400 hover:text-blue-600"
-                              title="Edit folder"
-                            >
-                              <Edit size={14} />
-                            </button>
-                            <button 
-                              onClick={() => deleteFolder(folder.id)}
-                              className="text-gray-400 hover:text-red-600"
-                              title="Delete folder"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        )}
-                        
-                        <ChevronRight 
-                          size={16} 
-                          className={`transition-transform ${folder.expanded ? 'rotate-90' : ''}`}
-                          onClick={() => toggleFolder(folder.id)}
-                        />
+                        {/* Fixed: Added min-width to actions container to prevent layout shift */}
+                        <div className="flex items-center space-x-1 min-w-[38px]">
+                          {/* Folder Actions (visible on hover) */}
+                          {hoveredItem && hoveredItem.type === 'folder' && hoveredItem.id === folder.id && (
+                            <div className="flex space-x-1">
+                              <button 
+                                onClick={() => startEditing('folder', folder.id, folder.name)}
+                                className="text-gray-400 hover:text-blue-600"
+                                title="Edit folder"
+                              >
+                                <Edit size={14} />
+                              </button>
+                              <button 
+                                onClick={() => deleteFolder(folder.id)}
+                                className="text-gray-400 hover:text-red-600"
+                                title="Delete folder"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          )}
+                          
+                          <ChevronRight 
+                            size={16} 
+                            className={`transition-transform ${folder.expanded ? 'rotate-90' : ''}`}
+                            onClick={() => toggleFolder(folder.id)}
+                          />
+                        </div>
                       </>
                     )}
                   </>
@@ -262,12 +301,17 @@ const Sidebar = ({ open, folders = [], setFolders = () => {}, onDashboardSelect 
                   {folder.dashboards.map((dashboard) => (
                     <div 
                       key={dashboard.id}
-                      className="flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer"
+                      className={`flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer ${
+                        activeDashboard && 
+                        activeDashboard.folderId === folder.id && 
+                        activeDashboard.dashboardId === dashboard.id ? 
+                        'bg-blue-100' : ''
+                      }`}
                       onMouseEnter={() => setHoveredItem({ type: 'dashboard', id: dashboard.id, folderId: folder.id })}
                       onMouseLeave={() => setHoveredItem(null)}
                       onClick={() => onDashboardSelect({ folderId: folder.id, dashboardId: dashboard.id })}
                     >
-                      <FileText size={14} className="mr-2 text-gray-500" />
+                      <FileText size={14} className="mr-2 text-gray-500 flex-shrink-0" />
                       
                       {/* Dashboard Name (Editable) */}
                       {editingItem && 
@@ -297,18 +341,21 @@ const Sidebar = ({ open, folders = [], setFolders = () => {}, onDashboardSelect 
                         </div>
                       ) : (
                         <>
-                          <span className="flex-1 text-sm">{dashboard.name}</span>
+                          {/* Fixed: Added truncate class to prevent text overflow */}
+                          <span className="flex-1 truncate text-sm" title={dashboard.name}>
+                            {dashboard.name}
+                          </span>
                           
-                          {/* Dashboard Actions */}
-                          <div className="flex items-center">
-                            {/* Star Toggle (always visible) */}
+                          {/* Fixed: Added min-width to actions container to prevent layout shift */}
+                          <div className="flex items-center space-x-1 min-w-[46px] flex-shrink-0">
+                            {/* Star Toggle - Simplified to just be visual, no favorites functionality */}
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleStarred(folder.id, dashboard.id);
                               }}
                               className={dashboard.starred ? "text-yellow-400" : "text-gray-300 hover:text-yellow-400"}
-                              title={dashboard.starred ? "Remove from favorites" : "Add to favorites"}
+                              title="Mark as favorite"
                             >
                               <Star size={14} />
                             </button>
